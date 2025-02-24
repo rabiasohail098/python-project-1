@@ -124,7 +124,8 @@ if "quiz_submitted" not in st.session_state:
 user_answers = []
 for idx, q in enumerate(questions):
     st.subheader(f"**Q{idx + 1}: {q['question']}**")
-    answer = st.radio("", q["options"], key=f"q{idx}")
+    options = ["Select an option"] + q["options"]
+    answer = st.radio("", options, key=f"q{idx}", index=0)
     user_answers.append({"question": q["question"], "selected": answer, "correct": q["answer"]})
 
 # Submit Button

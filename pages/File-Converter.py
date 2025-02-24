@@ -30,12 +30,16 @@ if uploaded_files:
         file_ext = os.path.splitext(file.name)[-1].lower()
         
         # Read file
-        if file_ext == ".csv":
-            df = pd.read_csv(file)
-        elif file_ext == ".xlsx":
-            df = pd.read_excel(file)
-        else:
-            st.error(f"Unsupported file type: {file_ext}")
+        try:
+            if file_ext == ".csv":
+                df = pd.read_csv(file)
+            elif file_ext == ".xlsx":
+                df = pd.read_excel(file)
+            else:
+                st.error(f"Unsupported file type: {file_ext}")
+                continue
+        except Exception as e:
+            st.error(f"Error reading file: {str(e)}")
             continue
 
         # File info
@@ -54,13 +58,16 @@ if uploaded_files:
             with col1:
                 if st.button(f"Remove Duplicates from {file.name}"):
                     df.drop_duplicates(inplace=True)
-                    st.write("Duplicates Removed ✅")
+                    st.success("✅ Duplicates Removed")
 
             with col2:
                 if st.button(f"Fill Missing Values for {file.name}"):
                     numeric_cols = df.select_dtypes(include=['number']).columns
-                    df[numeric_cols] = df[numeric_cols].fillna(df[numeric_cols].mean())
-                    st.write("Missing Values Filled ✅")
+                    if not numeric_cols.empty:
+                        df[numeric_cols] = df[numeric_cols].fillna(df[numeric_cols].mean())
+                        st.success("✅ Missing Values Filled")
+                    else:
+                        st.warning("⚠ No numeric columns found to fill missing values.")
 
         # Column Selection
         st.subheader(f"Select Columns for {file.name}")
@@ -69,8 +76,13 @@ if uploaded_files:
 
         # Data Visualization
         st.subheader(f"Visualization for {file.name}")
-        if st.checkbox(f"Show Bar Chart for {file.name}"):
-            st.bar_chart(df.select_dtypes(include='number').iloc[:, :2])
+        numeric_data = df.select_dtypes(include='number')
+        
+        if not numeric_data.empty:
+            if st.checkbox(f"Show Bar Chart for {file.name}"):
+                st.bar_chart(numeric_data.iloc[:, :min(2, numeric_data.shape[1])])
+        else:
+            st.warning("⚠ No numeric columns available for visualization.")
 
         # File Conversion
         st.subheader(f"Convert {file.name}")
@@ -97,4 +109,5 @@ if uploaded_files:
                 mime=mime_type
             )
 
-st.success("All files have been processed successfully! 🚀")
+    # ✅ Success message should only appear **after** processing files
+    st.success("All files have been processed successfully! 🚀")
